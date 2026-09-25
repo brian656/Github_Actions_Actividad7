@@ -13,7 +13,7 @@ jobs:
     env:
       NODE_ENV: production
       PORT: 3000
-      JWT_SECRET: test-secret
+      JWT_SECRET: 01a0d6a2-ff53-7c75-8875-19bf5ecc3b75_2
       CORS_ORIGINS: http://localhost:5173,https://ecommerce-dun-seven-91.vercel.app
 
     steps:
