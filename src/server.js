@@ -11,15 +11,25 @@ import { errorHandler, notFound } from './middleware/errorHandler.js';
 
 const app = express();
 const allowedOrigins = new Set(config.corsOrigins);
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.has(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Origen no permitido por CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
 
 app.use(helmet());
-app.use(cors({ origin: (origin, callback) => {
-  if (!origin || allowedOrigins.has(origin)) return callback(null, true);
-  return callback(new Error('Origen no permitido por CORS'));
-} }));
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 app.use(express.json({ limit: '10kb' }));
 
 app.get('/api/health', (req, res) => res.json({ mensaje:'Hola, servidor corriendo!' }));
+app.use('/auth', authRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api', protectedRoutes);
 app.use(notFound);
