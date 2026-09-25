@@ -37,14 +37,11 @@ jobs:
           echo "Health check OK"
 
       - name: Trigger Render deployment
-        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL != '' }}
         env:
           DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
-          curl -fsS -X POST "$DEPLOY_HOOK_URL"
-
-      - name: Warning if deploy hook is missing
-        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL == '' }}
-        run: |
-          echo "RENDER_DEPLOY_HOOK_URL is not configured. Add it in GitHub repository secrets to enable deployment."
-          exit 0
+          if [ -n "$DEPLOY_HOOK_URL" ]; then
+            curl -fsS -X POST "$DEPLOY_HOOK_URL"
+          else
+            echo "RENDER_DEPLOY_HOOK_URL is not configured. Add it in GitHub repository secrets to enable deployment."
+          fi
