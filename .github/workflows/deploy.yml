@@ -1,0 +1,50 @@
+name: Deploy backend to Render
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  validate-and-deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      NODE_ENV: production
+      PORT: 3000
+      JWT_SECRET: test-secret
+      CORS_ORIGINS: http://localhost:5173
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify app starts successfully
+        run: |
+          timeout 25s npm start > /tmp/backend.log 2>&1 &
+          sleep 8
+          curl -fsS http://localhost:3000/api/health
+          echo "Health check OK"
+
+      - name: Trigger Render deployment
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL != '' }}
+        env:
+          DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          curl -fsS -X POST "$DEPLOY_HOOK_URL"
+
+      - name: Warning if deploy hook is missing
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL == '' }}
+        run: |
+          echo "RENDER_DEPLOY_HOOK_URL is not configured. Add it in GitHub repository secrets to enable deployment."
+          exit 0
