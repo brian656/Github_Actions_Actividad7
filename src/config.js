@@ -12,7 +12,7 @@ export const config = {
   jwtSecret: process.env.JWT_SECRET,
   adminEmail: process.env.ADMIN_EMAIL,
   adminPassword: process.env.ADMIN_PASSWORD,
-  corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:5173,http://127.0.0.1:5173')
+  corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:5173,http://127.0.0.1:5173,https://ecommerce-dun-seven-91.vercel.app')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean),
