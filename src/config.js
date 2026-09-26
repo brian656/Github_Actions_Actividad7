@@ -23,3 +23,4 @@ export const config = {
     .map((origin) => origin.trim())
     .filter(Boolean),
 };
+//comenatior
