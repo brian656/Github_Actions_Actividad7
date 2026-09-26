@@ -5,7 +5,7 @@ import bcrypt from 'bcrypt';
 import authRoutes from './routes/auth.js';
 import protectedRoutes from './routes/protected.js';
 import { config } from './config.js';
-import { users } from './data/users.js';
+import { createUser, emailExists } from './data/users.js';
 import { logger } from './logger.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 
@@ -36,14 +36,16 @@ app.use(notFound);
 app.use(errorHandler);
 
 if (config.adminEmail && config.adminPassword) {
-  users.push({
-    id: users.length + 1,
-    name: 'Administrador',
-    email: config.adminEmail.toLowerCase(),
-    passwordHash: await bcrypt.hash(config.adminPassword, 12),
-    role: 'admin',
-  });
-  logger.info('Administrador inicial creado', { email: config.adminEmail.toLowerCase(), role: 'admin' });
+  const email = config.adminEmail.toLowerCase();
+  if (!emailExists(email)) {
+    createUser({
+      name: 'Administrador',
+      email,
+      passwordHash: await bcrypt.hash(config.adminPassword, 12),
+      role: 'admin',
+    });
+    logger.info('Administrador inicial creado', { email, role: 'admin' });
+  }
 }
 
 app.listen(config.port, () => {

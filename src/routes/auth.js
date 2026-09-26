@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
-import { users } from '../data/users.js';
+import { createUser, emailExists, findUserByEmail } from '../data/users.js';
 import { config } from '../config.js';
 import { logger } from '../logger.js';
 import { loginSchema, registerSchema } from '../validation/schemas.js';
@@ -20,18 +20,19 @@ router.post('/register', async (req, res, next) => {
   try {
     const { error, value } = registerSchema.validate(req.body);
     if (error) return res.status(400).json({ error: error.details[0].message });
-    if (users.some((user) => user.email === value.email)) {
+
+    const email = value.email.toLowerCase();
+    if (emailExists(email)) {
       return res.status(409).json({ error: 'El correo ya esta registrado' });
     }
 
-    const user = {
-      id: users.length + 1,
+    const user = createUser({
       name: value.name,
-      email: value.email,
+      email,
       passwordHash: await bcrypt.hash(value.password, 12),
       role: 'usuario',
-    };
-    users.push(user);
+    });
+
     logger.info('Registro de usuario', { userId: user.id, email: user.email, role: user.role });
     return res.status(201).json({ message: 'Usuario registrado', user: { id: user.id, name: user.name, email: user.email, role: user.role } });
   } catch (error) {
@@ -43,7 +44,8 @@ router.post('/login', loginLimiter, async (req, res, next) => {
   try {
     const { error, value } = loginSchema.validate(req.body);
     if (error) return res.status(400).json({ error: error.details[0].message });
-    const user = users.find((candidate) => candidate.email === value.email);
+
+    const user = findUserByEmail(value.email);
     const validPassword = user && await bcrypt.compare(value.password, user.passwordHash);
     if (!validPassword) {
       logger.warn('Inicio de sesion fallido', { email: value.email });
